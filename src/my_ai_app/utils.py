@@ -8,7 +8,7 @@ def average(numbers: list[float]) -> float:
     return sum(numbers) / len(numbers)
 
 
-def find_longest(words: list[str]) -> str:
+def find_longest(words: list[str]) -> str | None:
     """Return the longest word in a list of words."""
     if not words:
         return None
