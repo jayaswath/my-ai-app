@@ -1,8 +1,20 @@
 from typing import Annotated
 
-from fastapi import Depends, FastAPI, Header, HTTPException
+from fastapi import Depends, FastAPI, Header, HTTPException, Query
+from sqlalchemy import func, select
+from sqlalchemy.orm import Session
 
-from my_ai_app.schemas import DishRequest, DishResponse, GSTRequest, GSTResponse
+from my_ai_app.database import get_db
+from my_ai_app.models import Author, Post
+from my_ai_app.schemas import (
+    AuthorOut,
+    DishRequest,
+    DishResponse,
+    GSTRequest,
+    GSTResponse,
+    PostOut,
+    StatsOut,
+)
 
 app = FastAPI(
     title="My AI App",
@@ -77,3 +89,64 @@ async def protected_route(
 ) -> dict[str, str]:
     """An endpoint requiring authentication."""
     return {"message": "You're in"}
+
+
+DbSession = Annotated[Session, Depends(get_db)]
+
+
+@app.get("/posts", response_model=list[PostOut])
+async def list_posts(
+    db: DbSession,
+    limit: Annotated[int, Query(ge=1, le=100)] = 20,
+    offset: Annotated[int, Query(ge=0)] = 0,
+    author_id: int | None = None,
+) -> list[Post]:
+    """Serve items off the shelf, at most `limit` per order.
+
+    The customer cannot demand the entire warehouse - `le=100` is the
+    house rule. `offset` is how they ask for the next tray.
+    """
+    stmt = select(Post).order_by(Post.external_id)
+
+    if author_id is not None:
+        stmt = stmt.where(Post.user_id == author_id)
+
+    stmt = stmt.limit(limit).offset(offset)
+    return list(db.scalars(stmt).all())
+
+
+@app.get("/authors", response_model=list[AuthorOut])
+async def list_authors(db: DbSession) -> list[Author]:
+    """Show the supplier book."""
+    stmt = select(Author).order_by(Author.name)
+    return list(db.scalars(stmt).all())
+
+
+@app.get("/authors/{external_id}", response_model=AuthorOut)
+async def get_author(external_id: int, db: DbSession) -> Author:
+    """Look up one supplier by their ID.
+
+    Not in the book? Say so plainly - don't hand back an empty page
+    and pretend it worked.
+    """
+    stmt = select(Author).where(Author.external_id == external_id)
+    author = db.scalars(stmt).first()
+
+    if author is None:
+        raise HTTPException(status_code=404, detail=f"Author {external_id} not found")
+
+    return author
+
+
+@app.get("/stats", response_model=StatsOut)
+async def get_stats(db: DbSession) -> StatsOut:
+    """The summary board: what's on the shelves right now."""
+    total_posts = db.scalar(select(func.count(Post.id))) or 0
+    total_authors = db.scalar(select(func.count(Author.id))) or 0
+    avg_len = db.scalar(select(func.avg(func.length(Post.title)))) or 0
+
+    return StatsOut(
+        total_posts=total_posts,
+        total_authors=total_authors,
+        avg_title_length=round(float(avg_len), 1),
+    )

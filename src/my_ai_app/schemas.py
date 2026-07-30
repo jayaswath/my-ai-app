@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class DishRequest(BaseModel):
@@ -32,3 +32,39 @@ class GSTResponse(BaseModel):
     cgst: float
     sgst: float
     total: float
+
+
+class AuthorOut(BaseModel):
+    """What we show a customer about a supplier.
+
+    The supplier's full paperwork stays in the back office - the customer
+    only sees name, company and city. Nothing else leaves the kitchen.
+    """
+
+    model_config = ConfigDict(from_attributes=True)
+
+    external_id: int
+    name: str
+    username: str
+    email: str
+    company: str | None
+    city: str | None
+
+
+class PostOut(BaseModel):
+    """One item off the shelf, as handed to a customer."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    external_id: int
+    user_id: int
+    title: str
+    body: str
+
+
+class StatsOut(BaseModel):
+    """The end-of-day summary board."""
+
+    total_posts: int
+    total_authors: int
+    avg_title_length: float

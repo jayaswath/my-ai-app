@@ -3,7 +3,7 @@ from decimal import Decimal
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session, joinedload
 
-from my_ai_app.models import Customer, Order
+from my_ai_app.models import Customer, Order, Supplier
 
 
 def create_customer(db: Session, name: str, phone: str | None = None) -> Customer:
@@ -51,3 +51,30 @@ def get_or_create_customer(
     if existing is not None:
         return existing
     return create_customer(db, name, phone)
+
+
+def create_supplier(
+    db: Session, name: str, city: str, contact: str | None = None
+) -> Supplier:
+    """Insert a new supplier and return it with its generated ID."""
+    supplier = Supplier(name=name, city=city, contact=contact)
+    db.add(supplier)
+    db.commit()
+    db.refresh(supplier)
+    return supplier
+
+
+def get_suppliers_by_city(db: Session, city: str) -> list[Supplier]:
+    """Return all suppliers in a city, alphabetically."""
+    stmt = select(Supplier).where(Supplier.city == city).order_by(Supplier.name)
+    return list(db.scalars(stmt).all())
+
+
+def count_orders_per_dish(db: Session) -> list[tuple[str, int]]:
+    """Return how many times each dish was ordered, most popular first."""
+    stmt = (
+        select(Order.dish, func.count(Order.id).label("times_ordered"))
+        .group_by(Order.dish)
+        .order_by(func.count(Order.id).desc())
+    )
+    return [(row.dish, row.times_ordered) for row in db.execute(stmt)]
