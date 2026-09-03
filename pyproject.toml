@@ -15,10 +15,17 @@ dependencies = [
     "pyarrow>=25.0.0",
     "pydantic-settings>=2.14.2",
     "requests>=2.34.2",
+    "scikit-learn>=1.9.0",
+    "scipy>=1.17.1",
     "sqlalchemy>=2.0.51",
+    "statsmodels>=0.14.6",
     "tenacity>=9.1.4",
     "uvicorn[standard]>=0.51.0",
 ]
+
+[[tool.mypy.overrides]]
+module = ["sklearn.*"]
+ignore_missing_imports = true
 
 [dependency-groups]
 dev = [
