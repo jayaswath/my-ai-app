@@ -53,7 +53,6 @@ extend-exclude = ["docs", "src/my_ai_app/learn"]
 select = ["E", "F", "I", "N", "UP", "B"]
 
 [tool.mypy]
-python_version = "3.11"
 strict = true
 exclude = ["src/my_ai_app/learn/"]
 
