@@ -32,7 +32,7 @@ dependencies = [
 ]
 
 [[tool.mypy.overrides]]
-module = ["sklearn.*"]
+module = ["sklearn.*", "pandas.*", "apscheduler.*", "joblib.*"]
 ignore_missing_imports = true
 
 [dependency-groups]
@@ -46,14 +46,15 @@ dev = [
 [tool.ruff]
 line-length = 88
 target-version = "py311"
-extend-exclude = ["docs"]
+# learn/ holds practice scripts from the curriculum, kept out of strict checks
+extend-exclude = ["docs", "src/my_ai_app/learn"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "N", "UP", "B"]
 
 [tool.mypy]
-python_version = "3.11"
 strict = true
+exclude = ["src/my_ai_app/learn/"]
 
 [build-system]
 requires = ["hatchling"]
@@ -63,3 +64,4 @@ build-backend = "hatchling.build"
 testpaths = ["tests"]
 python_files = ["test_*.py"]
 addopts = "-v"
+markers = ["integration: needs a running Postgres database"]

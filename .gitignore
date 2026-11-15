@@ -6,5 +6,5 @@ __pycache__/
 .ruff_cache/
 .pytest_cache/
 data/
-echo .env >> .gitignore
-git check-ignore -v .env
+.coverage
+error.txt

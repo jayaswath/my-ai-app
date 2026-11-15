@@ -1,8 +1,12 @@
+import pytest
 from fastapi.testclient import TestClient
 
 from my_ai_app.api import app
 
 client = TestClient(app)
+
+# Needs a running Postgres loaded by the pipeline; skipped in CI.
+pytestmark = pytest.mark.integration
 
 
 def test_stats_returns_counts() -> None:

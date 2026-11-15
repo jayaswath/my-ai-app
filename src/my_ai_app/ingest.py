@@ -1,8 +1,10 @@
 import asyncio
 import logging
 import time
+from typing import Any, cast
 
 import httpx
+from sqlalchemy import CursorResult
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 from tenacity import (
@@ -35,7 +37,7 @@ CONCURRENCY = 5
     before_sleep=before_sleep_log(logger, logging.WARNING),
     reraise=True,
 )
-async def fetch_page(client: httpx.AsyncClient, page: int) -> list[dict]:
+async def fetch_page(client: httpx.AsyncClient, page: int) -> list[dict[str, Any]]:
     """Fetch one page of posts, retrying on network or server errors."""
     response = await client.get(
         f"{BASE_URL}/posts",
@@ -49,12 +51,13 @@ async def fetch_page(client: httpx.AsyncClient, page: int) -> list[dict]:
         await asyncio.sleep(wait)
 
     response.raise_for_status()
-    return response.json()
+    posts: list[dict[str, Any]] = response.json()
+    return posts
 
 
-async def fetch_all_posts(client: httpx.AsyncClient) -> list[dict]:
+async def fetch_all_posts(client: httpx.AsyncClient) -> list[dict[str, Any]]:
     """Walk through every page until an empty one comes back."""
-    all_posts: list[dict] = []
+    all_posts: list[dict[str, Any]] = []
     page = 1
 
     while page <= MAX_PAGES:
@@ -73,28 +76,29 @@ async def fetch_all_posts(client: httpx.AsyncClient) -> list[dict]:
 
 async def fetch_users_concurrently(
     client: httpx.AsyncClient, user_ids: list[int]
-) -> list[dict]:
+) -> list[dict[str, Any]]:
     """Fetch several users at once, capped at CONCURRENCY in flight."""
     semaphore = asyncio.Semaphore(CONCURRENCY)
 
-    async def fetch_one(user_id: int) -> dict:
+    async def fetch_one(user_id: int) -> dict[str, Any]:
         async with semaphore:
             response = await client.get(f"{BASE_URL}/users/{user_id}", timeout=10.0)
             response.raise_for_status()
-            return response.json()
+            user: dict[str, Any] = response.json()
+            return user
 
     results = await asyncio.gather(
         *[fetch_one(uid) for uid in user_ids], return_exceptions=True
     )
 
-    good = [r for r in results if not isinstance(r, Exception)]
+    good = [r for r in results if not isinstance(r, BaseException)]
     failed = len(results) - len(good)
     if failed:
         logger.warning("%s user fetches failed", failed)
     return good
 
 
-def upsert_posts(db: Session, posts: list[dict]) -> int:
+def upsert_posts(db: Session, posts: list[dict[str, Any]]) -> int:
     """Insert posts, updating any that already exist. Safe to re-run."""
     if not posts:
         return 0
@@ -119,7 +123,7 @@ def upsert_posts(db: Session, posts: list[dict]) -> int:
         },
     )
 
-    result = db.execute(stmt)
+    result = cast(CursorResult[Any], db.execute(stmt))
     db.commit()
     return result.rowcount
 

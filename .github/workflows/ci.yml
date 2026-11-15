@@ -9,6 +9,9 @@ on:
 jobs:
   quality:
     runs-on: ubuntu-latest
+    env:
+      # Dummy value so settings load; unit tests never connect to it.
+      DATABASE_URL: postgresql+psycopg://ci:ci@localhost:5432/ci
 
     steps:
       - name: Checkout code
@@ -32,4 +35,4 @@ jobs:
         run: uv run mypy src
 
       - name: Tests
-        run: uv run pytest --cov=src
+        run: uv run pytest -m "not integration" --cov=src
