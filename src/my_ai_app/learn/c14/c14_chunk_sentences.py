@@ -26,5 +26,6 @@ def chunk_sentences(text, max_words=20):
     return chunks
 
 
-for i, chunk in enumerate(chunk_sentences(sop)):
-    print(f"[{i}] ({len(chunk.split())} words) {chunk}")
+if __name__ == "__main__":
+    for i, chunk in enumerate(chunk_sentences(sop)):
+        print(f"[{i}] ({len(chunk.split())} words) {chunk}")
