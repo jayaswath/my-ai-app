@@ -2,8 +2,13 @@ from __future__ import annotations
 
 import pandas as pd
 
-from my_ai_app.features import CATEGORICAL_COLS, NUMERIC_COLS, TARGET, build_pipeline
-from my_ai_app.ml_data import generate_orders
+from my_ai_app.learn.w4.w4_features import (
+    CATEGORICAL_COLS,
+    NUMERIC_COLS,
+    TARGET,
+    build_pipeline,
+)
+from my_ai_app.learn.w4.w4_ml_data import generate_orders
 
 
 def test_generator_is_reproducible() -> None:
@@ -23,9 +28,9 @@ def test_pipeline_survives_missing_values() -> None:
 def test_unseen_category_does_not_crash() -> None:
     """A new aggregator launches on Tuesday."""
     df = generate_orders(n=500)
-    X, y = df[NUMERIC_COLS + CATEGORICAL_COLS], df[TARGET]
+    x, y = df[NUMERIC_COLS + CATEGORICAL_COLS], df[TARGET]
     pipe = build_pipeline()
-    pipe.fit(X, y)
-    unseen = X.head(1).copy()
+    pipe.fit(x, y)
+    unseen = x.head(1).copy()
     unseen["platform"] = "magicpin"
     assert len(pipe.predict(unseen)) == 1

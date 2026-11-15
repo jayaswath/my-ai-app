@@ -1,9 +1,10 @@
 from pathlib import Path
+from typing import Any
 
 import pandas as pd
 
 
-def posts_to_frame(posts: list[dict]) -> pd.DataFrame:
+def posts_to_frame(posts: list[dict[str, Any]]) -> pd.DataFrame:
     """Convert raw API posts into a cleaned DataFrame."""
     df = pd.DataFrame(posts)
 
@@ -19,7 +20,7 @@ def posts_to_frame(posts: list[dict]) -> pd.DataFrame:
     return df.drop_duplicates(subset=["external_id"])
 
 
-def authors_to_frame(users: list[dict]) -> pd.DataFrame:
+def authors_to_frame(users: list[dict[str, Any]]) -> pd.DataFrame:
     """Convert raw API users into a cleaned DataFrame."""
     rows = [
         {

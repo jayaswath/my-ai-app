@@ -1,6 +1,7 @@
 import asyncio
 import logging
 import time
+from typing import Any
 
 import httpx
 from sqlalchemy import func, select
@@ -20,7 +21,7 @@ POST_COLUMNS = ["external_id", "user_id", "title", "body"]
 AUTHOR_COLUMNS = ["external_id", "name", "username", "email", "company", "city"]
 
 
-def upsert_authors(db: Session, rows: list[dict]) -> None:
+def upsert_authors(db: Session, rows: list[dict[str, Any]]) -> None:
     """Insert or update authors by external_id."""
     if not rows:
         return
@@ -38,7 +39,7 @@ def upsert_authors(db: Session, rows: list[dict]) -> None:
     db.commit()
 
 
-def upsert_posts(db: Session, rows: list[dict]) -> None:
+def upsert_posts(db: Session, rows: list[dict[str, Any]]) -> None:
     """Insert or update posts by external_id."""
     if not rows:
         return
